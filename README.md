@@ -9,7 +9,7 @@ This project demonstrates how IoT telemetry can be collected, exported as metric
 Python  
 MQTT  
 Prometheus  
-Grafana  
+Grafana (visualization testing)
 Docker  
 Linux  
 
