@@ -1,51 +1,75 @@
-# Industrial IoT Motor Monitoring System
+# Industrial IoT Motor Monitoring Simulator
 
-Simulation of an industrial motor vibration monitoring system using IoT technologies.
+Simulation of industrial motor vibration sensors with real-time monitoring using Prometheus and MQTT.
 
-The project simulates multiple sensors sending vibration data to an MQTT broker.  
-Metrics are collected with Prometheus and visualized with Grafana dashboards.
+This project demonstrates how IoT telemetry can be collected, exported as metrics and visualized in monitoring systems.
 
 ## Technologies
 
-- Python
-- MQTT
-- Docker
-- Prometheus
-- Grafana
-- Linux
+Python  
+MQTT  
+Prometheus  
+Grafana  
+Docker  
+Linux  
 
 ## Architecture
 
-Sensor Simulator → MQTT → Prometheus → Grafana
+Sensor Simulator → MQTT Broker → Prometheus → Grafana
+
+The simulator generates vibration metrics for multiple motors and exposes them for monitoring systems.
 
 ## Features
 
-- Simulation of multiple industrial sensors
-- Real-time data streaming
-- Monitoring with Prometheus
-- Visualization dashboards in Grafana
-- Alert simulation
-- Containerized environment using Docker
+- Simulation of multiple industrial motors
+- Real-time telemetry
+- MQTT data publishing
+- Prometheus metrics exporter
+- Monitoring ready for Grafana dashboards
+- Scriptable and extensible architecture
 
-## Project Structure
+## Example Metric
 
 ```
-simulator        Sensor simulation
-mqtt             MQTT communication
-monitoring       Prometheus configuration
-dashboard        Grafana dashboards
-docker           Docker setup
+vibracion_motor{motor_id="M1"} 0.87
 ```
+
+Each motor produces a time series that can be monitored and analyzed.
 
 ## Screenshots
 
-Add Grafana dashboards here.
+### Prometheus Metrics
+(image)
+
+### Grafana Dashboard
+(image)
+
+## Running the Project
+
+Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+Run simulator
+
+```
+python simulator/motor_simulator.py
+```
+
+Prometheus endpoint:
+
+```
+http://localhost:8000
+```
 
 ## Use Case
 
-Industrial environments require continuous monitoring of motor vibration to detect anomalies and prevent failures.  
-This project demonstrates how IoT and observability tools can be combined to build such monitoring systems.
+Industrial environments monitor vibration to detect anomalies and prevent equipment failure.  
+This project simulates that telemetry pipeline using modern observability tools.
 
 ## Author
 
 Yael Triana
+Computer Systems Engineering
