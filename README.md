@@ -39,10 +39,8 @@ Each motor produces a time series that can be monitored and analyzed.
 ## Screenshots
 
 ### Prometheus Metrics
-(image)
+<img width="1874" height="1039" alt="image" src="https://github.com/user-attachments/assets/e249d75b-a62d-4cee-941c-811a77156ca6" />
 
-### Grafana Dashboard
-(image)
 
 ## Running the Project
 
