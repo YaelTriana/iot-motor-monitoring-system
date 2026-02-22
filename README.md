@@ -157,6 +157,7 @@ This project demonstrates how a lightweight IoT monitoring pipeline can be built
 # Author
 
 Yael Triana
+
 Computer Systems Engineering
 
 
