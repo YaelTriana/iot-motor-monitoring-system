@@ -1,5 +1,5 @@
 # Industrial IoT Motor Monitoring Simulator
-
+Python • IoT • MQTT • Prometheus • Monitoring • Observability
 Simulation of industrial motor vibration sensors with real-time monitoring using Prometheus and MQTT.
 
 This project demonstrates how IoT telemetry can be collected, exported as metrics and visualized in monitoring systems.
@@ -15,18 +15,27 @@ Linux
 
 ## Architecture
 
-Sensor Simulator → MQTT Broker → Prometheus → Grafana
+Sensor Simulator (Python)
+        │
+        ▼
+MQTT Broker
+        │
+        ▼
+Prometheus Metrics
+        │
+        ▼
+Grafana Visualization
 
 The simulator generates vibration metrics for multiple motors and exposes them for monitoring systems.
 
 ## Features
 
-- Simulation of multiple industrial motors
-- Real-time telemetry
-- MQTT data publishing
+- Multi-motor vibration simulation
+- Real-time telemetry streaming
+- MQTT message publishing
 - Prometheus metrics exporter
-- Monitoring ready for Grafana dashboards
-- Scriptable and extensible architecture
+- Monitoring pipeline compatible with Grafana
+- Easily extensible simulation architecture
 
 ## Example Metric
 
@@ -36,7 +45,14 @@ vibracion_motor{motor_id="M1"} 0.87
 
 Each motor produces a time series that can be monitored and analyzed.
 
-## Screenshots
+## Data Flow
+
+1. Python simulator generates vibration values.
+2. Data is published to MQTT topics.
+3. Prometheus scrapes the metrics endpoint.
+4. Metrics can be visualized in Grafana dashboards.
+
+## Monitoring Output
 
 ### Prometheus Metrics
 <img width="1874" height="1039" alt="image" src="https://github.com/user-attachments/assets/e249d75b-a62d-4cee-941c-811a77156ca6" />
@@ -62,10 +78,17 @@ Prometheus endpoint:
 http://localhost:8000
 ```
 
-## Use Case
+## Why this project
 
-Industrial environments monitor vibration to detect anomalies and prevent equipment failure.  
-This project simulates that telemetry pipeline using modern observability tools.
+Industrial systems rely on continuous monitoring to detect anomalies before failures occur.  
+This project demonstrates how a lightweight IoT monitoring pipeline can be built using open-source observability tools.
+
+## Possible Extensions
+
+- Real sensor integration
+- Cloud deployment
+- Alert rules for vibration anomalies
+- Data persistence for analysis
 
 ## Author
 
