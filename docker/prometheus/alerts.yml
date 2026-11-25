@@ -1,0 +1,36 @@
+groups:
+  - name: motors
+    rules:
+      - alert: MotorVibrationWarning
+        expr: motor_vibration_rms_g >= 1.2
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "Motor {{ $labels.motor_id }} vibration is high"
+          description: "Rolling RMS is {{ $value | printf \"%.2f\" }} g (warning at 1.2 g) for more than 30s."
+
+      - alert: MotorVibrationCritical
+        expr: motor_vibration_rms_g >= 1.8
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Motor {{ $labels.motor_id }} vibration is critical"
+          description: "Rolling RMS is {{ $value | printf \"%.2f\" }} g (critical at 1.8 g). Inspect bearings."
+
+      - alert: MotorSilent
+        expr: time() - motor_last_message_timestamp_seconds > 30
+        for: 10s
+        labels:
+          severity: warning
+        annotations:
+          summary: "No data from motor {{ $labels.motor_id }} for 30s"
+
+      - alert: CollectorDown
+        expr: up{job="motormon-collector"} == 0
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus cannot scrape the collector"
