@@ -1,163 +1,116 @@
+# Industrial IoT Motor Monitoring
 
-# Industrial IoT Motor Monitoring Simulator
+[![CI](https://github.com/YaelTriana/iot-motor-monitoring-system/actions/workflows/ci.yml/badge.svg)](https://github.com/YaelTriana/iot-motor-monitoring-system/actions/workflows/ci.yml)
 
-Educational project demonstrating an IoT monitoring pipeline.
+A small but complete monitoring pipeline for industrial motors: simulated vibration sensors publish over **MQTT**, a collector turns the stream into **Prometheus** metrics, **Grafana** shows the fleet and Prometheus **alerts** fire when a bearing starts to fail.
 
-Python • IoT • MQTT • Prometheus • Monitoring • Observability
+One command starts everything:
 
-Simulation of industrial motor vibration sensors with a real-time telemetry and monitoring pipeline using MQTT and Prometheus.
+```bash
+docker compose up --build
+```
 
-The system simulates multiple motors publishing vibration data through MQTT while Prometheus collects and exposes metrics for monitoring.
-
----
-
-# Technologies
-
-Python  
-MQTT  
-Prometheus  
-Grafana (visualization testing)  
-Docker  
-Linux  
+| Service | URL |
+|---|---|
+| Grafana dashboard | http://localhost:3000 (anonymous view) |
+| Prometheus + alerts | http://localhost:9090/alerts |
+| Collector metrics | http://localhost:8000/metrics |
+| MQTT broker | `localhost:1883`, topic `motors/<id>/vibration` |
 
 ---
 
-# Architecture
+## Architecture
 
 ```mermaid
 flowchart LR
-
-Simulator[Motor Simulator - Python]
-
-MQTT[MQTT Broker]
-
-Exporter[Metrics Endpoint]
-
-Prometheus[Prometheus Server]
-
-Grafana[Grafana Dashboards]
-
-Simulator -->|publish vibration data| MQTT
-Simulator -->|expose metrics| Exporter
-Exporter --> Prometheus
-Prometheus --> Grafana
-````
-
----
-
-# Features
-
-* Multi-motor vibration simulation
-* Real-time telemetry streaming
-* MQTT message publishing
-* Prometheus metrics exporter
-* Monitoring pipeline compatible with Grafana
-* Easily extensible simulation architecture
-
----
-
-# Example Metric
-
-```
-# HELP vibracion_motor Motor vibration value
-# TYPE vibracion_motor gauge
-vibracion_motor{motor_id="M1"} 0.87
+    S[Simulator<br/>N motors] -- "MQTT<br/>motors/+/vibration" --> B[(Mosquitto)]
+    B --> C[Collector<br/>validation + rolling RMS]
+    C -- "/metrics" --> P[Prometheus<br/>alert rules]
+    P --> G[Grafana<br/>provisioned dashboard]
 ```
 
-Each motor produces a time series that can be monitored and analyzed.
+- **Simulator** (`src/motormon/simulator.py`): each motor has its own baseline, noise and a rotation harmonic. At random a fault starts and vibration climbs a little every tick, like real bearing wear.
+- **Collector** (`src/motormon/collector.py`): subscribes to every motor, rejects malformed messages (and counts them), keeps a rolling RMS per motor and classifies it as OK, warning or critical.
+- **Prometheus** scrapes the collector every 5 s and evaluates the rules in `docker/prometheus/alerts.yml`.
+- **Grafana** is provisioned from code: data source and dashboard live in `docker/grafana/`.
+
+### Metrics
+
+| Metric | Type | Meaning |
+|---|---|---|
+| `motor_vibration_g{motor_id}` | gauge | Last reading |
+| `motor_vibration_rms_g{motor_id}` | gauge | Rolling RMS over the last 10 readings |
+| `motor_status{motor_id}` | gauge | 0 OK · 1 warning · 2 critical |
+| `motor_last_message_timestamp_seconds{motor_id}` | gauge | When the motor last reported |
+| `mqtt_messages_total` / `mqtt_invalid_messages_total` | counter | Accepted and rejected messages |
+
+### Alerts
+
+| Alert | Fires when |
+|---|---|
+| `MotorVibrationWarning` | RMS ≥ 1.2 g for 30 s |
+| `MotorVibrationCritical` | RMS ≥ 1.8 g for 15 s |
+| `MotorSilent` | A motor sends nothing for 30 s |
+| `CollectorDown` | Prometheus cannot scrape the collector |
+
+The thresholds are design assumptions for this simulation, not values taken from a standard.
 
 ---
 
-# Data Flow
+## Configuration
 
-1. Python simulator generates vibration values.
-2. Data is published to MQTT topics.
-3. Prometheus scrapes the metrics endpoint.
-4. Metrics can be visualized in Grafana dashboards.
+All settings are environment variables, so the same code runs in Docker and locally.
 
----
+| Variable | Default | Used by |
+|---|---|---|
+| `MOTORS` | `3` | simulator |
+| `INTERVAL` | `1` (seconds) | simulator |
+| `FAULT_PROBABILITY` | `0.002` per tick | simulator |
+| `SEED` | random | simulator |
+| `MQTT_HOST` / `MQTT_PORT` | `localhost` / `1883` | both |
+| `METRICS_PORT` | `8000` | collector |
 
-# Monitoring Output
+Example: `MOTORS=8 FAULT_PROBABILITY=0.01 docker compose up --build`
 
-### Prometheus Metrics
+## Running without Docker
 
-<img width="1874" height="1039" alt="image" src="https://github.com/user-attachments/assets/e249d75b-a62d-4cee-941c-811a77156ca6" />
+```bash
+pip install -e ".[dev]"
+motormon-collector            # needs an MQTT broker on localhost:1883
+MOTORS=5 motormon-simulator
+```
 
----
+## Tests
 
-# Project Structure
+```bash
+pytest -q          # model, payload validation, rolling RMS, status and metrics
+ruff check .
+```
+
+CI runs the tests, validates the compose file and the Prometheus rules, and smoke-tests the pipeline end to end with Docker.
+
+## Project structure
 
 ```
-simulator/
-   motor_simulator.py
-
-metrics/
-   exporter.py
-
+src/motormon/
+  model.py          vibration model and fault injection
+  simulator.py      MQTT publisher
+  collector.py      MQTT -> Prometheus
+tests/
 docker/
-   docker-compose.yml
-
-prometheus.yml
-requirements.txt
+  mosquitto/        broker config
+  prometheus/       scrape config + alert rules
+  grafana/          provisioned data source + dashboard
+docker-compose.yml
+Dockerfile
 ```
+
+## Next steps
+
+- Persist readings (TimescaleDB or InfluxDB) for longer-term analysis
+- Alertmanager routing to email or Telegram
+- Replace the simulator with a real sensor (ESP32 + accelerometer)
 
 ---
 
-# Skills Demonstrated
-
-IoT telemetry pipelines
-
-Metrics collection and monitoring
-MQTT messaging systems
-
-Observability with Prometheus
-
-Containerized development
-
----
-
-# Running the Project
-
-Install dependencies
-
-```
-pip install -r requirements.txt
-```
-
-Run simulator
-
-```
-python simulator/motor_simulator.py
-```
-
-Prometheus endpoint
-
-```
-http://localhost:8000
-```
-
----
-
-# Why this project
-
-Industrial systems rely on continuous monitoring to detect anomalies before failures occur.
-This project demonstrates how a lightweight IoT monitoring pipeline can be built using open-source observability tools.
-
----
-
-# Possible Extensions
-
-* Real sensor integration
-* Cloud deployment
-* Alert rules for vibration anomalies
-* Data persistence for analysis
-
----
-
-# Author
-
-Yael Triana
-
-Computer Systems Engineering
-
-
+Yael Kristoph Triana Sánchez · Computer Systems Engineering, TecNM Tijuana

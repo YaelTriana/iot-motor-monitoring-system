@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: pytest -q
+
+  stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose file
+        run: docker compose config -q
+      - name: Validate Prometheus config and alert rules
+        run: |
+          docker run --rm -v "$PWD/docker/prometheus:/etc/prometheus:ro" \
+            --entrypoint promtool prom/prometheus:v2.54.1 check config /etc/prometheus/prometheus.yml
+      - name: Smoke test the pipeline
+        run: |
+          docker compose up -d --build mosquitto simulator collector
+          for i in $(seq 1 30); do
+            if curl -fs localhost:8000/metrics | grep -q '^motor_vibration_rms_g{motor_id="M1"}'; then
+              echo "metrics are flowing"; exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs
+          exit 1
+      - if: always()
+        run: docker compose down

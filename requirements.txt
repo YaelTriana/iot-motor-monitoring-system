@@ -1,2 +1,2 @@
-prometheus_client
-paho-mqtt
+paho-mqtt>=2.0,<3
+prometheus-client>=0.20
